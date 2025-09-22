@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Binary Voting Machine - Median Estimation</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="setup">
+        <input type="text" id="dataset" placeholder="Enter sorted numbers: 1,2,3,4,5">
+        <input type="number" id="iterations" placeholder="Max iterations" value="5">
+        <button onclick="startVoting()">Start</button>
+    </div>
+    
+    <div id="voting" style="display:none">
+        <h2>Is the median greater than <span id="guess"></span>?</h2>
+        <button onclick="vote(true)">Yes (>)</button>
+        <button onclick="vote(false)">No (≤)</button>
+        <p>Range: [<span id="range"></span>] | Iteration: <span id="iter"></span></p>
+    </div>
+    
+    <div id="result" style="display:none">
+        <h2>Final Range: [<span id="finalRange"></span>]</h2>
+        <button onclick="reset()">Reset</button>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
