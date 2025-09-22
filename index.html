@@ -1,28 +1,338 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Binary Voting Machine - Median Estimation</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Binary Voting Machine</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 32px;
+            font-size: 1.1em;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9em;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .question {
+            text-align: center;
+            font-size: 1.4em;
+            margin-bottom: 32px;
+            color: #1e293b;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            color: #92400e;
+        }
+
+        .visualization {
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            max-width: 100%;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .legend-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .btn-vote {
+            flex: 1;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-yes {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-yes:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-no {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-no:hover {
+            background: #dc2626;
+            transform: translateY(-2px);
+        }
+
+        .status {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .status-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .result-box {
+            background: #f0fdf4;
+            padding: 24px;
+            border-radius: 8px;
+            border-left: 4px solid #10b981;
+            margin-bottom: 24px;
+        }
+
+        .result-item {
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        @media (max-width: 640px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            .vote-buttons {
+                flex-direction: column;
+            }
+            
+            .status-row {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="setup">
-        <input type="text" id="dataset" placeholder="Enter sorted numbers: 1,2,3,4,5">
-        <input type="number" id="iterations" placeholder="Max iterations" value="5">
-        <button onclick="startVoting()">Start</button>
+    <div class="container">
+        <h1>Binary Voting Machine</h1>
+        <p class="subtitle">By: Yuwen Wang</p>
+
+        <div id="setup" class="card">
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Start Value</label>
+                    <input type="number" id="start" value="0">
+                </div>
+                <div class="input-group">
+                    <label>End Value</label>
+                    <input type="number" id="end" value="100">
+                </div>
+                <div class="input-group">
+                    <label>Max Iterations</label>
+                    <input type="number" id="iterations" value="5">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="startVoting()">Start Voting</button>
+        </div>
+
+        <div id="voting" class="card" style="display:none">
+            <div class="question">
+                Is it greater than <span id="guess" class="highlight"></span>?
+            </div>
+            
+            <div class="visualization">
+                <canvas id="canvas" width="600" height="180"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #fecaca;"></div>
+                        Eliminated
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #bbf7d0;"></div>
+                        Remaining
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #fef3c7;"></div>
+                        Current Guess
+                    </div>
+                </div>
+            </div>
+
+            <div class="vote-buttons">
+                <button class="btn-vote btn-yes" onclick="vote(true)">YES (>)</button>
+                <button class="btn-vote btn-no" onclick="vote(false)">NO (≤)</button>
+            </div>
+
+            <div class="status">
+                <div class="status-row">
+                    <span class="status-label">Index Range:</span>
+                    <span>[<span id="indexRange"></span>]</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Value Range:</span>
+                    <span>[<span id="valueRange"></span>]</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Iteration:</span>
+                    <span id="iter"></span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Remaining:</span>
+                    <span id="remaining"></span> values
+                </div>
+            </div>
+        </div>
+
+        <div id="result" class="card" style="display:none">
+            <div class="result-box">
+                <div class="result-item">
+                    <strong>Final Index Range:</strong> [<span id="finalIndexRange"></span>]
+                </div>
+                <div class="result-item">
+                    <strong>Final Value Range:</strong> [<span id="finalValueRange"></span>]
+                </div>
+                <div class="result-item">
+                    <strong>Range Width:</strong> <span id="rangeWidth"></span> values
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="reset()">New Search</button>
+        </div>
     </div>
-    
-    <div id="voting" style="display:none">
-        <h2>Is the median greater than <span id="guess"></span>?</h2>
-        <button onclick="vote(true)">Yes (>)</button>
-        <button onclick="vote(false)">No (≤)</button>
-        <p>Range: [<span id="range"></span>] | Iteration: <span id="iter"></span></p>
-    </div>
-    
-    <div id="result" style="display:none">
-        <h2>Final Range: [<span id="finalRange"></span>]</h2>
-        <button onclick="reset()">Reset</button>
-    </div>
-    
+
     <script src="script.js"></script>
 </body>
 </html>
