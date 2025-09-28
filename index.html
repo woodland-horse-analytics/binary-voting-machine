@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Binary Voting</title>
+    <title>Binary Voting Machine</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -18,7 +18,6 @@
         .container { max-width: 400px; width: 100%; margin: 0 auto; flex: 1; }
         h1 { font-size: 24px; margin: 20px 0 5px; font-weight: bold; text-align: center; }
         h2 { text-align: center; margin: 0 0 30px; color: #888; font-weight: normal; font-size: 16px; }
-        .section { margin-bottom: 30px; }
         .inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         label { display: block; font-size: 14px; margin-bottom: 6px; }
         input, button {
@@ -33,15 +32,28 @@
         input:focus { outline: none; border-color: #666; }
         button { cursor: pointer; }
         button:hover { background: #333; }
+        .instructions {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #aaa;
+        }
+        .instructions ol { margin-left: 20px; }
+        .instructions li { margin-bottom: 8px; }
         .question { font-size: 20px; margin-bottom: 30px; text-align: center; }
         .highlight { background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 4px; font-weight: 700; }
         canvas { border: 1px solid #444; margin: 20px 0; display: block; width: 100%; }
-        .votes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+        .votes { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0 20px; }
         .vote-btn { padding: 20px; font-size: 18px; }
         .yes { border-color: #4f4; color: #4f4; }
         .yes:hover { background: #4f4; color: #111; }
         .no { border-color: #f44; color: #f44; }
         .no:hover { background: #f44; color: #111; }
+        .unsure { border-color: #888; color: #888; margin-bottom: 30px; }
+        .unsure:hover { background: #888; color: #111; }
         .status, .result { background: #222; border: 1px solid #444; padding: 15px; }
         .status-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         .status-row:last-child { margin-bottom: 0; }
@@ -53,38 +65,46 @@
 </head>
 <body>
     <div class="container">
-        <h1>Binary voting machine</h1>
-        <h2>Find your range through binary search</h2>
-        
-        <div id="setup" class="section">
+        <div id="setup">
+            <h1>Binary voting machine</h1>
+            <h2>Reach group decisions through iterative voting</h2>
+            
             <div class="inputs">
-                <div><label>Start value</label><input type="number" id="start" value="0"></div>
-                <div><label>End value</label><input type="number" id="end" value="100"></div>
-                <div><label>Max iterations</label><input type="number" id="iterations" value="5"></div>
+                <div><label>Start</label><input type="number" id="start" value="0"></div>
+                <div><label>End</label><input type="number" id="end" value="100"></div>
+                <div><label>Iterations</label><input type="number" id="iterations" value="5"></div>
             </div>
-            <button onclick="startVoting()">Start</button>
+            <button onclick="startVoting()">Start voting</button>
+            
+            <div class="instructions">
+                <ol>
+                    <li>Set your range (start/end values)</li>
+                    <li>Choose iterations: Each iteration cuts the range in half. Example: Range 0-100 with 4 iterations goes 100→50→25→12→6. Want precision of 10? Use 4 iterations.</li>
+                    <li>Each round: poll your group, press YES if majority (>50%), NO if minority (<50%), I'M NOT SURE if tied (=50%)</li>
+                    <li>Final range = group consensus</li>
+                </ol>
+            </div>
         </div>
         
-        <div id="voting" class="section hidden">
+        <div id="voting" class="hidden">
             <div class="question">Is it greater than <span id="guess" class="highlight"></span>?</div>
             <canvas id="canvas" width="400" height="80"></canvas>
             <div class="votes">
-                <button class="vote-btn yes" onclick="vote(true)">YES (>)</button>
-                <button class="vote-btn no" onclick="vote(false)">NO (≤)</button>
+                <button class="vote-btn yes" onclick="vote(1)">YES (>)</button>
+                <button class="vote-btn no" onclick="vote(0)">NO (≤)</button>
             </div>
+            <button class="vote-btn unsure" onclick="vote(Math.random()<.5?0:1)">I'M NOT SURE</button>
             <div class="status">
-                <div class="status-row"><span>Index range:</span><span>[<span id="indexRange"></span>]</span></div>
-                <div class="status-row"><span>Value range:</span><span>[<span id="valueRange"></span>]</span></div>
-                <div class="status-row"><span>Iteration:</span><span id="iter"></span></div>
-                <div class="status-row"><span>Remaining:</span><span id="remaining"></span></div>
+                <div class="status-row"><span>Range:</span><span>[<span id="valueRange"></span>]</span></div>
+                <div class="status-row"><span>Round:</span><span id="iter"></span></div>
             </div>
         </div>
         
-        <div id="result" class="section hidden">
+        <div id="result" class="hidden">
+            <h2 style="margin-bottom: 20px;">Consensus reached</h2>
             <div class="result">
-                <div>Final index: [<span id="finalIndexRange"></span>]</div>
-                <div>Final value: [<span id="finalValueRange"></span>]</div>
-                <div>Range width: <span id="rangeWidth"></span></div>
+                <div>Final range: [<span id="finalValueRange"></span>]</div>
+                <div>Range width: <span id="rangeWidth"></span> values</div>
             </div>
             <button onclick="reset()">New session</button>
         </div>
@@ -95,94 +115,69 @@
             Built by <a href="https://github.com/woodland-horse-analytics" style="color: #4a9eff; text-decoration: none;">Woodland Horse Analytics</a>
         </p>
         <p style="margin: 0; font-size: 12px;">
-            <a href="https://github.com/woodland-horse-analytics/flash-anzan" style="color: #666; text-decoration: none; margin: 0 12px;">Source</a>
+            <a href="https://github.com/woodland-horse-analytics/binary-voting-machine" style="color: #666; text-decoration: none; margin: 0 12px;">Source</a>
             <a href="mailto:yw3413@columbia.edu" style="color: #666; text-decoration: none; margin: 0 12px;">Contact</a>
         </p>
-        <p style="font-size: 12px; color: #9ca3af;">
-            © 2025 Woodland Horse Analytics LLC
-        </p>
+        <p style="font-size: 12px; color: #9ca3af;">© 2025 Woodland Horse Analytics LLC</p>
     </footer>
     
     <script>
-        let dataset = [], maxIterations, currentIteration, i, j;
+        let data = [], max, iter, i, j;
         const $ = id => document.getElementById(id);
         
         function startVoting() {
-            const start = +$('start').value;
-            const end = +$('end').value;
-            maxIterations = +$('iterations').value;
-            
-            dataset = [];
-            for (let v = start; v <= end; v++) dataset.push(v);
-            
-            i = 1;
-            j = dataset.length;
-            currentIteration = 0;
-            
+            const s = +$('start').value, e = +$('end').value;
+            max = +$('iterations').value;
+            data = [];
+            for (let v = s; v <= e; v++) data.push(v);
+            i = 1; j = data.length; iter = 0;
             $('setup').classList.add('hidden');
             $('voting').classList.remove('hidden');
-            updateDisplay();
+            update();
         }
         
-        function vote(isGreater) {
+        function vote(yes) {
             const m = Math.floor((i + j) / 2);
-            isGreater ? i = m + 1 : j = m;
-            currentIteration++;
-            
-            currentIteration >= maxIterations || i >= j ? showResult() : updateDisplay();
+            yes ? i = m + 1 : j = m;
+            ++iter >= max || i >= j ? end() : update();
         }
         
-        function updateDisplay() {
+        function update() {
             const m = Math.floor((i + j) / 2);
-            $('guess').textContent = dataset[m - 1];
-            $('indexRange').textContent = `${i}, ${j}`;
-            $('valueRange').textContent = `${dataset[i-1]}, ${dataset[j-1]}`;
-            $('iter').textContent = `${currentIteration}/${maxIterations}`;
-            $('remaining').textContent = j - i + 1;
-            drawVisualization();
+            $('guess').textContent = data[m - 1];
+            $('valueRange').textContent = `${data[i-1]}, ${data[j-1]}`;
+            $('iter').textContent = `${iter + 1}/${max}`;
+            draw();
         }
         
-        function drawVisualization() {
+        function draw() {
             const ctx = $('canvas').getContext('2d');
-            const w = 400, h = 80, margin = 15;
-            const rw = w - 2 * margin, rh = 30, ry = (h - rh) / 2;
-            const total = dataset.length, ew = rw / total;
+            const w = 400, h = 80, g = 15, rw = w - 2 * g, rh = 30, ry = (h - rh) / 2;
+            const n = data.length, ew = rw / n, m = Math.floor((i + j) / 2);
             
             ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, w, h);
-            
             ctx.strokeStyle = '#444';
-            ctx.strokeRect(margin, ry, rw, rh);
+            ctx.strokeRect(g, ry, rw, rh);
             
-            if (i > 1) {
-                ctx.fillStyle = '#311';
-                ctx.fillRect(margin, ry, (i - 1) * ew, rh);
-            }
-            if (j < total) {
-                ctx.fillStyle = '#311';
-                ctx.fillRect(margin + j * ew, ry, (total - j) * ew, rh);
-            }
+            if (i > 1) ctx.fillStyle = '#311', ctx.fillRect(g, ry, (i - 1) * ew, rh);
+            if (j < n) ctx.fillStyle = '#311', ctx.fillRect(g + j * ew, ry, (n - j) * ew, rh);
             ctx.fillStyle = '#131';
-            ctx.fillRect(margin + (i - 1) * ew, ry, (j - i + 1) * ew, rh);
-            
-            const m = Math.floor((i + j) / 2);
+            ctx.fillRect(g + (i - 1) * ew, ry, (j - i + 1) * ew, rh);
             ctx.fillStyle = '#fef3c7';
-            ctx.fillRect(margin + (m - 1) * ew, ry, ew, rh);
+            ctx.fillRect(g + (m - 1) * ew, ry, ew, rh);
             
-            if (i <= j) {
-                ctx.fillStyle = '#fff';
-                ctx.font = '10px monospace';
-                ctx.textAlign = 'center';
-                ctx.fillText(dataset[i-1], margin + (i - 0.5) * ew, ry - 5);
-                ctx.fillText(dataset[j-1], margin + (j - 0.5) * ew, ry - 5);
-            }
+            ctx.fillStyle = '#fff';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(data[i-1], g + (i - 0.5) * ew, ry - 5);
+            ctx.fillText(data[j-1], g + (j - 0.5) * ew, ry - 5);
         }
         
-        function showResult() {
+        function end() {
             $('voting').classList.add('hidden');
             $('result').classList.remove('hidden');
-            $('finalIndexRange').textContent = `${i}, ${j}`;
-            $('finalValueRange').textContent = `${dataset[i-1]}, ${dataset[j-1]}`;
+            $('finalValueRange').textContent = `${data[i-1]}, ${data[j-1]}`;
             $('rangeWidth').textContent = j - i + 1;
         }
         
